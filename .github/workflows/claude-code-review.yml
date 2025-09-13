@@ -1,0 +1,94 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # 只在核心代码目录发生变化时触发
+    paths:
+      - "src/**/*.py"
+      - "*.py"
+      - "requirements.txt"
+      - "setup.py"
+
+jobs:
+  claude-review:
+    # 可选：只对特定作者的PR进行审查
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        env:
+          ANTHROPIC_BASE_URL: "https://api.aicodemirror.com/api/claudecode"
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # 使用 Claude Sonnet 4 进行代码审查
+          # model: "claude-opus-4-20250514"  # 如需使用 Opus 4，请取消注释
+          
+          # 针对 Excel 到 PDF 转换工具的专业代码审查提示
+          direct_prompt: |
+            请审查这个 Excel 到 PDF 标签打印工具的 Pull Request，重点关注：
+
+            **代码质量 & Python 最佳实践：**
+            - Python 代码规范和 PEP 8 遵循情况
+            - 类型提示和文档字符串的完整性
+            - 异常处理和错误管理
+            - 代码复用性和模块化设计
+
+            **业务逻辑专业审查：**
+            - Excel 数据读取和验证的准确性
+            - PDF 生成逻辑和 ReportLab 使用规范
+            - 字体管理和中文支持处理
+            - GUI 组件的用户体验和错误处理
+
+            **性能和安全考虑：**
+            - 大文件处理的内存效率
+            - 文件路径安全和输入验证
+            - 并发处理的安全性
+            - 资源管理和清理
+
+            **测试和维护性：**
+            - 测试覆盖率和边界情况
+            - 代码可维护性和可扩展性
+            - 配置管理和环境兼容性
+
+            请提供建设性和具体的反馈建议，并考虑项目的中文用户群体特点。
+
+          # 使用粘性评论，避免重复评论
+          use_sticky_comment: true
+          
+          # 允许Claude运行项目特定的测试和检查命令
+          allowed_tools: "Bash(python -m pytest tests/ -v),Bash(python -m black --check src/),Bash(python -m flake8 src/),Bash(python -c 'import src; print(\"Import test passed\")')"
+          
+          # 跳过包含特定标记的PR
+          # if: |
+          #   !contains(github.event.pull_request.title, '[skip-review]') &&
+          #   !contains(github.event.pull_request.title, '[WIP]')

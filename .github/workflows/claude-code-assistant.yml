@@ -1,0 +1,113 @@
+name: Claude Code Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    # 只有提及 @claude 时才触发
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Claude 需要此权限来读取 PR 的 CI 结果
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Claude Code Assistant
+        id: claude
+        uses: anthropics/claude-code-action@beta
+        env:
+          ANTHROPIC_BASE_URL: "https://api.aicodemirror.com/api/claudecode"
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # 允许 Claude 读取 CI 结果
+          additional_permissions: |
+            actions: read
+          
+          # 使用 Claude Sonnet 4（默认）
+          # model: "claude-opus-4-20250514"  # 如需使用 Opus 4，请取消注释
+          
+          # 自定义触发短语（默认为 @claude）
+          # trigger_phrase: "/claude"
+          
+          # 当特定用户被分配到 issue 时触发
+          # assignee_trigger: "claude-bot"
+          
+          # 允许 Claude 运行特定的项目命令
+          allowed_tools: "Bash(python -m pytest tests/ -v),Bash(python -m pytest tests/ -k *),Bash(python -m black src/),Bash(python -m flake8 src/),Bash(python src/cli/main.py --help),Bash(python -c 'import src; print(\"Modules imported successfully\")')"
+          
+          # 为项目定制的 Claude 指令
+          custom_instructions: |
+            # Data to PDF Print 项目助手指令
+
+            ## 项目概述
+            你正在协助一个 Excel 到 PDF 标签打印工具项目：
+            - **主要功能**：从 Excel 文件读取数据，生成可打印的 PDF 标签
+            - **技术栈**：Python + ReportLab + pandas + openpyxl + tkinter
+            - **架构**：CLI + GUI 双界面，模块化设计
+            - **用户群体**：主要为中文用户
+
+            ## 代码规范要求
+            - 遵循 PEP 8 Python 代码规范
+            - 使用 black 进行代码格式化
+            - 通过 flake8 代码检查
+            - 添加适当的类型提示和文档字符串
+            - 支持中文注释和字符串
+
+            ## 核心技术领域
+            1. **Excel 数据处理**：使用 pandas 和 openpyxl 读取和验证数据
+            2. **PDF 生成**：基于 ReportLab 的标签设计和渲染
+            3. **GUI 开发**：tkinter 界面设计和用户交互
+            4. **字体管理**：支持中文字体和字符编码
+            5. **模板系统**：可扩展的标签模板架构
+
+            ## 测试和质量保证
+            - 确保新代码有相应的测试
+            - 验证 Excel 读取的边界情况
+            - 测试 PDF 生成的各种数据格式
+            - 检查 GUI 的用户体验和错误处理
+
+            ## 帮助用户时重点关注
+            - 提供具体的代码示例和解决方案
+            - 考虑中文字符处理和显示问题
+            - 关注大文件处理的性能优化
+            - 确保跨平台兼容性（Windows/macOS/Linux）
+            - 提供清晰的错误信息和用户指导
+
+          # 自定义环境变量
+          claude_env: |
+            PYTHONPATH: ./src
+            LANG: zh_CN.UTF-8
