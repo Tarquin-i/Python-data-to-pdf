@@ -74,7 +74,7 @@ class RegularTemplate(PDFBaseUtils):
         # 计算各级数量
         total_boxes = math.ceil(total_pieces / pieces_per_box)
         total_small_boxes = math.ceil(total_boxes / boxes_per_small_box)
-        math.ceil(total_small_boxes / small_boxes_per_large_box)
+        total_large_boxes = math.ceil(total_small_boxes / small_boxes_per_large_box)
 
         # 计算余数信息
         remaining_pieces_in_last_box = total_pieces % pieces_per_box
@@ -204,7 +204,7 @@ class RegularTemplate(PDFBaseUtils):
 
         # 计算各级数量
         total_boxes = math.ceil(total_pieces / pieces_per_box)
-        math.ceil(total_boxes / boxes_per_large_box)
+        total_large_boxes = math.ceil(total_boxes / boxes_per_large_box)
 
         # 创建输出目录
         clean_theme = (

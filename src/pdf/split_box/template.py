@@ -74,7 +74,7 @@ class SplitBoxTemplate(PDFBaseUtils):
         # 计算各级数量 (使用向上取整处理余数)
         total_boxes = math.ceil(total_pieces / pieces_per_box)
         total_small_boxes = math.ceil(total_boxes / boxes_per_small_box)
-        math.ceil(total_small_boxes / small_boxes_per_large_box)
+        total_large_boxes = math.ceil(total_small_boxes / small_boxes_per_large_box)
 
         # 创建输出目录
         clean_theme = (
@@ -175,7 +175,7 @@ class SplitBoxTemplate(PDFBaseUtils):
 
         # 计算各级数量
         total_boxes = math.ceil(total_pieces / pieces_per_box)
-        math.ceil(total_boxes / boxes_per_large_box)
+        total_large_boxes = math.ceil(total_boxes / boxes_per_large_box)
 
         # 创建输出目录
         clean_theme = (
