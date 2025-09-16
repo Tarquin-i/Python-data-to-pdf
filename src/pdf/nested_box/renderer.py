@@ -50,7 +50,7 @@ class NestedBoxRenderer(BaseRenderer):
                                     serial_range, carton_no, remark_text, serial_font_size=10):
         """绘制套盒套标表格"""
         self.draw_standard_box_table(c, width, height, theme_text, pieces_per_small_box, 
-                                    serial_range, carton_no, remark_text, "有纸卡备注", serial_font_size)
+                                    serial_range, carton_no, remark_text, serial_font_size, has_paper_card=True)
 
     def draw_nested_small_box_table_no_paper_card(self, c, width, height, theme_text, pieces_per_small_box, 
                                                   serial_range, carton_no, remark_text, serial_font_size=10):
@@ -70,13 +70,29 @@ class NestedBoxRenderer(BaseRenderer):
         self.draw_standard_box_table(c, width, height, theme_text, pieces_per_large_box, 
                                     serial_range, carton_no, remark_text, serial_font_size, has_paper_card=False)
 
+    # ==================== 空白标签渲染方法 - 按标签类型分离 ====================
+    
+    def render_blank_box_first_page(self, c, width, height, chinese_name):
+        """渲染套盒模板盒标的空白首页 - 专门用于盒标"""
+        return super().render_blank_box_first_page(c, width, height, chinese_name, font_size=14)
+    
+    def render_empty_small_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
+        """渲染套盒模板套标空白标签 - 专门用于套标（小箱标）"""
+        return super().render_empty_small_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
+
+    def render_empty_large_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
+        """渲染套盒模板箱标空白标签 - 专门用于箱标（大箱标）"""
+        return super().render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
+    
+    # ==================== 向后兼容方法 ====================
+    
     def render_empty_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
-        """渲染空箱标签 - 套盒模板版本（有纸卡备注）"""
-        super().render_empty_box_label(c, width, height, chinese_name, remark_text, has_paper_card=has_paper_card)
+        """兼容性方法 - 重定向到大箱标空白标签（套盒模板箱标）"""
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
 
     def render_empty_box_label_no_paper_card(self, c, width, height, chinese_name, remark_text):
-        """渲染空箱标签 - 套盒模板版本（无纸卡备注）"""
-        super().render_empty_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
+        """兼容性方法 - 重定向到大箱标空白标签（无纸卡版本）"""
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
 
     def render_blank_first_page(self, c, width, height, chinese_name):
         """渲染套盒模板盒标的空白首页"""

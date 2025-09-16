@@ -24,7 +24,7 @@ class RegularRenderer(BaseRenderer):
         """渲染外观一：简洁标准样式"""
         return self.render_centered_title(c, width, top_text, top_text_y, serial_number, serial_number_y, 22)
 
-    def render_appearance_two(self, c, width, page_size, game_title, ticket_count, serial_number, top_y, bottom_y):
+    def render_appearance_two(self, c, width, page_size, game_title, ticket_count, serial_number):
         """渲染外观二：精确的三行布局格式"""
         return self.render_three_line_layout(c, width, page_size, game_title, ticket_count, serial_number)
     
@@ -48,24 +48,38 @@ class RegularRenderer(BaseRenderer):
             serial_range, carton_no, remark_text, serial_font_size, has_paper_card
         )
     
-    # ==================== 空白标签渲染方法 ====================
+    # ==================== 空白标签渲染方法 - 按标签类型分离 ====================
+    
+    def render_blank_box_first_page(self, c, width, height, chinese_name):
+        """渲染常规模板盒标的空白首页 - 专门用于盒标"""
+        return super().render_blank_box_first_page(c, width, height, chinese_name, font_size=22)
+    
+    def render_empty_small_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
+        """渲染常规模板小箱标空白标签 - 专门用于小箱标"""
+        return super().render_empty_small_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
+
+    def render_empty_large_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
+        """渲染常规模板大箱标空白标签 - 专门用于大箱标"""
+        return super().render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
+    
+    # ==================== 向后兼容方法 ====================
     
     def render_empty_box_label(self, c, width, height, chinese_name, remark_text, has_paper_card=True):
-        """渲染空箱标签 - 用于小箱标和大箱标的第一页（有纸卡备注）"""
-        if has_paper_card:
-            return self.render_empty_box_label_with_paper_card(c, width, height, chinese_name, remark_text)
-        else:
-            return self.render_empty_box_label_without_paper_card(c, width, height, chinese_name, remark_text)
+        """
+        兼容性方法 - 重定向到大箱标空白标签
+        为了向后兼容保留此方法，建议新代码使用具体的方法名称。
+        """
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
 
     def render_empty_box_label_no_paper_card(self, c, width, height, chinese_name, remark_text):
-        """渲染空箱标签 - 用于小箱标和大箱标的第一页（无纸卡备注）"""
-        return self.render_empty_box_label_without_paper_card(c, width, height, chinese_name, remark_text)
+        """兼容性方法 - 重定向到大箱标空白标签（无纸卡版本）"""
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
 
-    # ==================== 首页渲染方法 ====================
+    # ==================== 首页渲染方法（兼容性保留）====================
     
     def render_blank_first_page(self, c, width, height, chinese_name):
-        """渲染常规模版盒标的空白首页 - 仅显示中文标题"""
-        return self.render_centered_chinese_title(c, width, height, chinese_name, font_size=22)
+        """兼容性方法 - 重定向到专门的盒标空白首页方法"""
+        return self.render_blank_box_first_page(c, width, height, chinese_name)
 
     def render_blank_first_page_appearance_two(self, c, width, height, chinese_name):
         """渲染常规模版外观2的空白首页 - 完全按照外观2格式"""

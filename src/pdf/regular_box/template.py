@@ -235,16 +235,13 @@ class RegularTemplate(PDFBaseUtils):
         
         # 添加第一页空白标签（仅在处理第一个盒标时）
         if start_box == 1:
-            # 获取客户编码用于备注
-            remark_text = data.get('客户名称编码', 'Unknown Client')
-            # 获取标签模版类型
-            template_type = params.get("标签模版", "有纸卡备注")
-            
-            # 根据标签模版类型选择空箱标签渲染函数
-            if template_type == "有纸卡备注":
-                regular_renderer.render_empty_box_label(c, width, height, chinese_name, remark_text)
-            else:  # "无纸卡备注"
-                regular_renderer.render_empty_box_label_no_paper_card(c, width, height, chinese_name, remark_text)
+            # 根据外观选择不同的空白首页格式
+            if style == "外观一":
+                # 外观一：使用标准盒标首页（22pt居中中文标题）
+                regular_renderer.render_blank_box_first_page(c, width, height, chinese_name)
+            else:  # 外观二
+                # 外观二：使用专门的游戏标题页（12pt左对齐，三行布局格式）
+                regular_renderer.render_blank_first_page_appearance_two(c, width, height, chinese_name)
             
             c.showPage()
             c.setFillColor(cmyk_black)
@@ -280,7 +277,7 @@ class RegularTemplate(PDFBaseUtils):
                 # 获取票数信息用于外观二
                 total_pieces = int(float(data["总张数"]))
                 pieces_per_box = int(params["张/盒"])
-                regular_renderer.render_appearance_two(c, width, self.page_size, top_text, pieces_per_box, current_number, top_text_y, serial_number_y)
+                regular_renderer.render_appearance_two(c, width, self.page_size, top_text, pieces_per_box, current_number)
 
         c.save()
 
@@ -339,18 +336,18 @@ class RegularTemplate(PDFBaseUtils):
         cmyk_black = CMYKColor(0, 0, 0, 1)
         c.setFillColor(cmyk_black)
 
-        # 在第一页添加空箱标签（仅在处理第一个小箱时）
+        # 在第一页添加小箱标专用空白标签（仅在处理第一个小箱时）
         if start_small_box == 1:
             # 获取中文名称参数
             chinese_name = params.get("中文名称", "")
             # 获取标签模版类型
             template_type = params.get("标签模版", "有纸卡备注")
             
-            # 根据标签模版类型选择空箱标签渲染函数
+            # 小箱标使用专门的小箱标空白标签（区分纸卡类型）
             if template_type == "有纸卡备注":
-                regular_renderer.render_empty_box_label(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_small_box_label(c, width, height, chinese_name, remark_text, has_paper_card=True)
             else:  # "无纸卡备注"
-                regular_renderer.render_empty_box_label_no_paper_card(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_small_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
             
             c.showPage()
             c.setFillColor(cmyk_black)
@@ -447,18 +444,18 @@ class RegularTemplate(PDFBaseUtils):
         cmyk_black = CMYKColor(0, 0, 0, 1)
         c.setFillColor(cmyk_black)
 
-        # 在第一页添加空箱标签（仅在处理第一个大箱时）
+        # 在第一页添加大箱标专用空白标签（仅在处理第一个大箱时）
         if start_large_box == 1:
             # 获取中文名称参数
             chinese_name = params.get("中文名称", "")
             # 获取标签模版类型
             template_type = params.get("标签模版", "有纸卡备注")
             
-            # 根据标签模版类型选择空箱标签渲染函数
+            # 大箱标使用专门的大箱标空白标签（区分纸卡类型）
             if template_type == "有纸卡备注":
-                regular_renderer.render_empty_box_label(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=True)
             else:  # "无纸卡备注"
-                regular_renderer.render_empty_box_label_no_paper_card(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
             
             c.showPage()
             c.setFillColor(cmyk_black)
@@ -551,18 +548,18 @@ class RegularTemplate(PDFBaseUtils):
         cmyk_black = CMYKColor(0, 0, 0, 1)
         c.setFillColor(cmyk_black)
 
-        # 在第一页添加空箱标签（仅在处理第一个箱时）
+        # 在第一页添加大箱标专用空白标签（仅在处理第一个箱时，二级模式也是大箱标）
         if start_large_box == 1:
             # 获取中文名称参数
             chinese_name = params.get("中文名称", "")
             # 获取标签模版类型
             template_type = params.get("标签模版", "有纸卡备注")
             
-            # 根据标签模版类型选择空箱标签渲染函数
+            # 二级模式的箱标也使用大箱标空白标签（区分纸卡类型）
             if template_type == "有纸卡备注":
-                regular_renderer.render_empty_box_label(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=True)
             else:  # "无纸卡备注"
-                regular_renderer.render_empty_box_label_no_paper_card(c, width, height, chinese_name, remark_text)
+                regular_renderer.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
             
             c.showPage()
             c.setFillColor(cmyk_black)

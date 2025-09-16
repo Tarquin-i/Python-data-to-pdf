@@ -301,8 +301,25 @@ class BaseRenderer(ABC):
         c.drawCentredString(table_info['label_center_x'], remark_y, "Remark:")
         c.drawCentredString(table_info['data_center_x'], remark_y, clean_remark_text)
     
-    def render_empty_box_label(self, c, width, height, chinese_name: str, remark_text: str, has_paper_card=True):
-        """渲染空箱标签"""
+    def render_empty_large_box_label(self, c, width, height, chinese_name: str, remark_text: str, has_paper_card=True):
+        """
+        渲染大箱标空白标签页 - 2025年重新设计版本
+        
+        专门用于大箱标的空白标签页渲染。
+        
+        设计要点：
+        1. 与正常大箱标保持完全一致的表格结构和尺寸
+        2. 使用统一的10pt粗体字体确保清晰度
+        3. 中文名称使用自适应换行和缩放技术
+        4. Quantity和Carton No保留空白供手工填写
+        
+        Args:
+            c: ReportLab canvas对象
+            width, height: 标签尺寸
+            chinese_name: 中文产品名称
+            remark_text: 备注信息（通常为客户编码）
+            has_paper_card: True=5行版本(有纸卡), False=4行版本(无纸卡)
+        """
         if has_paper_card:
             # 5行版本：Item显示"Paper Cards"，Theme显示中文名称
             rows_config = [
@@ -330,47 +347,92 @@ class BaseRenderer(ABC):
         c.line(table_info['table_x'] + table_info['label_col_width'], quantity_split_y, 
                table_info['table_x'] + table_info['table_width'], quantity_split_y)
         
-        # 设置字体
+        # 设置统一字体：10pt粗体，确保清晰度
         font_manager.set_best_font(c, 10, bold=True)
-        text_offset = 10 / 3
+        text_offset = 10 / 3  # 标准文字垂直偏移
         
         if has_paper_card:
-            # 5行版本
-            # Item行
+            # === 5行版本布局 ===
+            # Item行：显示"Paper Cards"
             item_y = table_info['row_positions'][4] + table_info['row_heights'][4]/2 - text_offset
             c.drawCentredString(table_info['label_center_x'], item_y, "Item:")
             c.drawCentredString(table_info['data_center_x'], item_y, "Paper Cards")
             
-            # Theme行
+            # Theme行：显示中文名称（支持换行和自适应）
             theme_y = table_info['row_positions'][3] + table_info['row_heights'][3]/2 - text_offset
             c.drawCentredString(table_info['label_center_x'], theme_y, "Theme:")
-            max_theme_width = table_info['data_col_width'] - 4*mm
+            max_theme_width = table_info['data_col_width'] - 4*mm  # 留出4mm边距
             self.draw_table_cell_text(c, chinese_name, table_info['data_center_x'], 
                                     table_info['row_positions'][3] + table_info['row_heights'][3]/2, 
                                     10, max_theme_width)
         else:
-            # 4行版本
-            # Item行 - 显示中文名称
+            # === 4行版本布局 ===
+            # Item行：显示中文名称（支持换行和自适应）
             item_y = table_info['row_positions'][3] + table_info['row_heights'][3]/2 - text_offset
             c.drawCentredString(table_info['label_center_x'], item_y, "Item:")
-            max_theme_width = table_info['data_col_width'] - 4*mm
+            max_theme_width = table_info['data_col_width'] - 4*mm  # 留出4mm边距
             self.draw_table_cell_text(c, chinese_name, table_info['data_center_x'], 
                                     table_info['row_positions'][3] + table_info['row_heights'][3]/2, 
                                     10, max_theme_width)
         
-        # Quantity行 (空白)
+        # Quantity行：保留空白供手工填写
         quantity_label_y = table_info['row_positions'][2] + table_info['row_heights'][2]/2 - text_offset
         c.drawCentredString(table_info['label_center_x'], quantity_label_y, "Quantity:")
+        # 数据区域故意留空
         
-        # Carton No行 (空白)
+        # Carton No行：保留空白供手工填写
         carton_y = table_info['row_positions'][1] + table_info['row_heights'][1]/2 - text_offset
         c.drawCentredString(table_info['label_center_x'], carton_y, "Carton No:")
+        # 数据区域故意留空
         
-        # Remark行
+        # Remark行：显示客户编码
         remark_y = table_info['row_positions'][0] + table_info['row_heights'][0]/2 - text_offset
         clean_remark_text = text_processor.clean_text_for_font(remark_text)
         c.drawCentredString(table_info['label_center_x'], remark_y, "Remark:")
         c.drawCentredString(table_info['data_center_x'], remark_y, clean_remark_text)
+    
+    def render_empty_small_box_label(self, c, width, height, chinese_name: str, remark_text: str, has_paper_card=True):
+        """
+        渲染小箱标空白标签页 - 2025年重新设计版本
+        
+        专门用于小箱标的空白标签页渲染。与大箱标使用相同的表格结构，
+        但在语义上明确区分用途。
+        
+        Args:
+            c: ReportLab canvas对象
+            width, height: 标签尺寸
+            chinese_name: 中文产品名称
+            remark_text: 备注信息（通常为客户编码）
+            has_paper_card: True=5行版本(有纸卡), False=4行版本(无纸卡)
+        """
+        # 小箱标空白标签使用与大箱标相同的表格结构
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
+    
+    def render_blank_box_first_page(self, c, width, height, chinese_name: str, font_size=22):
+        """
+        渲染盒标专用的空白首页 - 2025年重新设计版本
+        
+        专门用于盒标的空白首页渲染。与箱标的空白页不同，
+        盒标的空白页更简洁，只显示居中的中文标题。
+        
+        Args:
+            c: ReportLab canvas对象
+            width, height: 标签尺寸
+            chinese_name: 中文产品名称
+            font_size: 字体大小，默认22pt
+        """
+        return self.render_centered_chinese_title(c, width, height, chinese_name, font_size)
+    
+    # ==================== 向后兼容方法 ====================
+    
+    def render_empty_box_label(self, c, width, height, chinese_name: str, remark_text: str, has_paper_card=True):
+        """
+        兼容性方法 - 重定向到大箱标空白标签
+        
+        为了向后兼容，此方法重定向到专门的大箱标空白标签方法。
+        建议新代码直接使用具体的方法名称。
+        """
+        return self.render_empty_large_box_label(c, width, height, chinese_name, remark_text, has_paper_card)
     
     # ==================== 子类调用的兼容方法 ====================
     
@@ -484,92 +546,12 @@ class BaseRenderer(ABC):
         c.drawString(left_margin, serial_y, "Serial:")
     
     def render_empty_box_label_with_paper_card(self, c, width, height, chinese_name, remark_text):
-        """渲染有纸卡备注的空箱标签 - 直接调用主实现"""
-        # 5行版本：Item显示"Paper Cards"，Theme显示中文名称
-        rows_config = [
-            {'height_ratio': 1},    # Remark
-            {'height_ratio': 1},    # Carton No (空白)
-            {'height_ratio': 2},    # Quantity (空白)
-            {'height_ratio': 1},    # Theme
-            {'height_ratio': 1}     # Item
-        ]
-        
-        # 绘制表格结构
-        table_info = self.draw_base_table_structure(c, width, height, rows_config)
-        
-        # 绘制Quantity行的分隔线
-        quantity_row_idx = 2
-        quantity_split_y = table_info['row_positions'][quantity_row_idx] + table_info['row_heights'][quantity_row_idx] / 2
-        c.line(table_info['table_x'] + table_info['label_col_width'], quantity_split_y, 
-               table_info['table_x'] + table_info['table_width'], quantity_split_y)
-        
-        # 设置字体
-        font_manager.set_best_font(c, 10, bold=True)
-        text_offset = 10 / 3
-        
-        # Item行
-        item_y = table_info['row_positions'][4] + table_info['row_heights'][4]/2 - text_offset
-        c.drawCentredString(table_info['label_center_x'], item_y, "Item:")
-        c.drawCentredString(table_info['data_center_x'], item_y, "Paper Cards")
-        
-        # Theme行
-        theme_y = table_info['row_positions'][3] + table_info['row_heights'][3]/2 - text_offset
-        c.drawCentredString(table_info['label_center_x'], theme_y, "Theme:")
-        max_theme_width = table_info['data_col_width'] - 4*mm
-        self.draw_table_cell_text(c, chinese_name, table_info['data_center_x'], 
-                                table_info['row_positions'][3] + table_info['row_heights'][3]/2, 
-                                max_theme_width, 10)
-        
-        # Carton No行
-        carton_y = table_info['row_positions'][1] + table_info['row_heights'][1]/2 - text_offset
-        c.drawCentredString(table_info['label_center_x'], carton_y, "Carton No:")
-        
-        # Remark行
-        remark_y = table_info['row_positions'][0] + table_info['row_heights'][0]/2 - text_offset
-        clean_remark_text = text_processor.clean_text_for_font(remark_text)
-        c.drawCentredString(table_info['label_center_x'], remark_y, "Remark:")
-        c.drawCentredString(table_info['data_center_x'], remark_y, clean_remark_text)
+        """渲染有纸卡备注的空箱标签 - 调用主实现（2025重新设计版本）"""
+        return self.render_empty_box_label(c, width, height, chinese_name, remark_text, has_paper_card=True)
         
     def render_empty_box_label_without_paper_card(self, c, width, height, chinese_name, remark_text):
-        """渲染无纸卡备注的空箱标签 - 直接调用主实现"""
-        # 4行版本：Item显示中文名称
-        rows_config = [
-            {'height_ratio': 1},    # Remark
-            {'height_ratio': 1},    # Carton No (空白)
-            {'height_ratio': 2},    # Quantity (空白)
-            {'height_ratio': 1}     # Item
-        ]
-        
-        # 绘制表格结构
-        table_info = self.draw_base_table_structure(c, width, height, rows_config)
-        
-        # 绘制Quantity行的分隔线
-        quantity_row_idx = 2
-        quantity_split_y = table_info['row_positions'][quantity_row_idx] + table_info['row_heights'][quantity_row_idx] / 2
-        c.line(table_info['table_x'] + table_info['label_col_width'], quantity_split_y, 
-               table_info['table_x'] + table_info['table_width'], quantity_split_y)
-        
-        # 设置字体
-        font_manager.set_best_font(c, 10, bold=True)
-        text_offset = 10 / 3
-        
-        # Item行（显示中文名称）
-        item_y = table_info['row_positions'][3] + table_info['row_heights'][3]/2 - text_offset
-        c.drawCentredString(table_info['label_center_x'], item_y, "Item:")
-        max_item_width = table_info['data_col_width'] - 4*mm
-        self.draw_table_cell_text(c, chinese_name, table_info['data_center_x'], 
-                                table_info['row_positions'][3] + table_info['row_heights'][3]/2, 
-                                max_item_width, 10)
-        
-        # Carton No行
-        carton_y = table_info['row_positions'][1] + table_info['row_heights'][1]/2 - text_offset
-        c.drawCentredString(table_info['label_center_x'], carton_y, "Carton No:")
-        
-        # Remark行
-        remark_y = table_info['row_positions'][0] + table_info['row_heights'][0]/2 - text_offset
-        clean_remark_text = text_processor.clean_text_for_font(remark_text)
-        c.drawCentredString(table_info['label_center_x'], remark_y, "Remark:")
-        c.drawCentredString(table_info['data_center_x'], remark_y, clean_remark_text)
+        """渲染无纸卡备注的空箱标签 - 调用主实现（2025重新设计版本）"""
+        return self.render_empty_box_label(c, width, height, chinese_name, remark_text, has_paper_card=False)
     
     # ==================== 非抽象方法 ====================
     

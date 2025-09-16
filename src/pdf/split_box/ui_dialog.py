@@ -37,6 +37,13 @@ class SplitBoxUIDialog(BaseUIDialog):
             "has_small_box", "有小箱", self.on_small_box_choice_changed
         )
         
+        # 创建盒标类型选择
+        self.create_radio_group(
+            main_frame, "盒标类型选择",
+            [("无盒标", "无盒标"), ("有盒标", "有盒标")],
+            "has_box_label", "无盒标"
+        )
+        
         # 创建参数输入区域
         input_configs = [
             {
@@ -147,6 +154,7 @@ class SplitBoxUIDialog(BaseUIDialog):
                 "中文名称": chinese_name,
                 "序列号字体大小": serial_font_size,
                 "是否有小箱": has_small_box,
+                "是否有盒标": self.get_var_value("has_box_label") == "有盒标",
             }
 
             self.dialog.destroy()
