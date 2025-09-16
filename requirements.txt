@@ -1,6 +1,3 @@
-# CLI框架
-click>=8.1.0
-
 # 核心功能依赖
 reportlab>=3.6.0
 pandas>=1.5.0

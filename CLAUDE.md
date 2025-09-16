@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Data to PDF Print (data-to-pdfprint) 是一个用于读取Excel数据并生成PDF标签的Python CLI工具。它支持自定义模板，允许从同一数据生成不同样式的PDF标签。
+Data to PDF Print (data-to-pdfprint) 是一个用于读取Excel数据并生成PDF标签的Python GUI应用程序。它支持多种模板（常规、分盒、套盒），允许从同一数据生成不同样式的PDF标签。
 
 ## 开发命令
 
@@ -35,38 +35,36 @@ black src/
 flake8 src/
 ```
 
-### 运行CLI
+### 运行应用
 ```bash
-# 使用默认模板的基本用法
-data-to-pdf --input data.xlsx --template basic
-
-# 自定义模板用法
-data-to-pdf --input data.xlsx --template custom_template
-
-# 批量生成
-data-to-pdf --input data.xlsx --template basic --output output_dir/
+# 运行GUI应用
+python src/gui_app.py
 ```
 
 ### 构建GUI应用程序
 
-#### macOS版本（当前系统）
+使用统一的构建脚本 `scripts/build.py`：
+
 ```bash
-# 构建macOS版本
-python build_gui.py
+# 自动检测当前系统并构建
+python scripts/build.py
+
+# 指定目标平台构建
+python scripts/build.py --platform macOS     # 构建macOS版本
+python scripts/build.py --platform Windows   # 构建Windows版本
+
+# 查看帮助信息
+python scripts/build.py --help
 ```
 
-#### Windows版本（跨平台构建）
-```bash
-# 构建Windows版本（最好在Windows系统上运行）
-python build_windows.py
-
-# 或直接使用PyInstaller和Windows配置文件
-pyinstaller DataToPDF_GUI_Windows.spec --clean --noconfirm
-```
+#### 构建要求
+- **macOS**: 在macOS系统上构建，适用于M1/M2 Mac
+- **Windows**: 建议在Windows系统上构建，需要中文字体文件 `src/fonts/msyh.ttf`
+- **依赖**: 需要安装pyinstaller (`pip install pyinstaller`)
 
 #### 分发方式
-- **macOS**: `dist/DataToPDF_GUI` (ARM64架构，适用于M1/M2 Mac)
-- **Windows**: `dist/DataToPDF_GUI.exe` (使用 `build_windows.py`)
+- **macOS**: `dist/DataToPDF_GUI` (可执行文件)
+- **Windows**: `dist/DataToPDF_GUI.exe` + `windows_distribution/` (分发包)
 - **跨平台**: 使用源代码分发配合 `requirements.txt`
 
 ## 架构设计
@@ -75,19 +73,19 @@ pyinstaller DataToPDF_GUI_Windows.spec --clean --noconfirm
 
 项目采用模块化架构，职责清晰分离：
 
-- **CLI层** (`src/cli/`): 命令行界面和参数解析
-- **数据层** (`src/data/`): Excel读取和数据处理
-- **模板系统** (`src/template/`): 模板管理和渲染（计划中）
+- **GUI层** (`src/gui_app.py`): 图形用户界面主入口
+- **模板系统** (`src/pdf/`): 常规、分盒、套盒三种模板系统
 - **PDF生成** (`src/pdf/`): 基于ReportLab的PDF创建
-- **配置管理** (`src/config/`): 设置和配置管理
-- **工具类** (`src/utils/`): 通用辅助函数
+- **渲染器** (`src/pdf/*/renderer.py`): 各模板专属渲染器
+- **UI对话框** (`src/pdf/*/ui_dialog.py`): 各模板参数设置界面
+- **工具类** (`src/utils/`): 通用辅助函数和基础渲染器
+- **构建脚本** (`scripts/`): 应用程序构建和打包脚本
 
 ### 主要依赖
 
 - `reportlab>=3.6.0` - PDF生成
 - `pandas>=1.5.0` - 数据操作
 - `openpyxl>=3.1.0` - Excel文件读取
-- `click>=8.1.0` - CLI框架
 
 ### 模板系统设计
 
@@ -99,10 +97,10 @@ pyinstaller DataToPDF_GUI_Windows.spec --clean --noconfirm
 
 ### 数据流程
 
-1. **Excel读取**: `ExcelReader` 类使用pandas/openpyxl读取Excel文件
-2. **数据处理**: `DataProcessor` 提取和验证特定字段
-3. **模板应用**: 模板系统根据选定模板渲染数据
-4. **PDF生成**: `PDFGenerator` 使用ReportLab创建最终PDF
+1. **Excel读取**: `ExcelDataExtractor` 类读取和解析Excel文件
+2. **数据处理**: 各模板的 `DataProcessor` 处理特定模板数据
+3. **模板应用**: 用户通过GUI选择模板和参数
+4. **PDF生成**: 各模板的 `Template` 类生成相应的PDF文件
 
 ### 配置管理
 
@@ -121,8 +119,8 @@ pyinstaller DataToPDF_GUI_Windows.spec --clean --noconfirm
 - `/templates/` - 模板文件存储
 - `/tests/` - 测试文件（README中存在计划结构）
 
-### 入口点
-CLI入口点在setup.py中配置为 `data-to-pdf=src.cli.main:main`
+### 应用入口
+GUI应用入口为 `src/gui_app.py`
 
 ### 文件命名约定
 Python文件和模块使用小写加下划线（snake_case）命名。

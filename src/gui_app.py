@@ -4,31 +4,33 @@ GUI应用程序
 支持Windows和macOS
 """
 
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-from pathlib import Path
-import sys
 import os
+import sys
+import tkinter as tk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 # 添加src目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.pdf.generator import PDFGenerator
+from src.pdf.nested_box.ui_dialog import get_nested_box_ui_dialog
 from src.pdf.regular_box.ui_dialog import get_regular_ui_dialog
 from src.pdf.split_box.ui_dialog import get_split_box_ui_dialog
-from src.pdf.nested_box.ui_dialog import get_nested_box_ui_dialog
-from src.utils.text_processor import text_processor
+from src.utils.data_input_dialog import show_data_input_dialog
 from src.utils.excel_data_extractor import ExcelDataExtractor
 from src.utils.font_manager import font_manager
-from src.utils.data_input_dialog import show_data_input_dialog
 
-# 在应用启动时初始化字体管理器
-print("[INFO] 初始化字体管理器...")
-font_success = font_manager.register_chinese_font()
-if font_success:
-    print("[OK] 字体管理器初始化成功")
-else:
-    print("[WARNING] 字体管理器初始化失败，将使用默认字体")
+
+def initialize_font_manager():
+    """初始化字体管理器"""
+    print("[INFO] 初始化字体管理器...")
+    font_success = font_manager.register_chinese_font()
+    if font_success:
+        print("[OK] 字体管理器初始化成功")
+    else:
+        print("[WARNING] 字体管理器初始化失败，将使用默认字体")
+    return font_success
 
 
 class DataToPDFApp:
@@ -51,7 +53,9 @@ class DataToPDFApp:
 
         # 标题
         title_label = ttk.Label(
-            main_frame, text="Excel数据到PDF转换工具", font=("Arial", 16, "bold")
+            main_frame,
+            text="Excel数据到PDF转换工具",
+            font=("Arial", 16, "bold"),
         )
         title_label.grid(row=0, column=0, pady=(0, 20))
 
@@ -125,7 +129,6 @@ class DataToPDFApp:
         self.current_data = None
         self.packaging_params = None
 
-
     def center_window(self):
         """窗口居中显示"""
         self.root.update_idletasks()
@@ -171,35 +174,42 @@ class DataToPDFApp:
 
             # 使用统一的Excel数据提取器
             extractor = ExcelDataExtractor(file_path)
-            
+
             # 先尝试获取统一标准数据（仅Excel数据）
             self.current_data = extractor.get_unified_standard_data()
-            
+
             # 检查是否有缺失字段需要用户补充
-            missing_fields = [field for field, value in self.current_data.items() if value is None]
-            
+            missing_fields = [
+                field for field, value in self.current_data.items() if value is None
+            ]
+
             if missing_fields:
                 # 有数据缺失，显示数据补充对话框
                 self.status_var.set("⚠️ 数据不完整，请补充...")
-                self.info_text.insert(tk.END, f"检测到{len(missing_fields)}个数据缺失，请补充：{', '.join(missing_fields)}\n")
+                self.info_text.insert(
+                    tk.END,
+                    f"检测到{len(missing_fields)}个数据缺失，请补充：{', '.join(missing_fields)}\n",
+                )
                 self.root.update()
-                
+
                 # 准备对话框显示用的数据（转换为字符串格式）
                 display_data = {}
                 for field, value in self.current_data.items():
-                    display_data[field] = str(value) if value is not None else ''
-                
+                    display_data[field] = str(value) if value is not None else ""
+
                 # 调用数据补充对话框
                 supplemented_data = show_data_input_dialog(self.root, display_data)
-                
+
                 if supplemented_data is None:
                     # 用户取消了补充操作
                     self.status_var.set("❌ 已取消数据补充")
                     self.info_text.insert(tk.END, "用户取消了数据补充操作\n")
                     return
-                
+
                 # 使用统一数据处理方法合并Excel数据和用户输入数据
-                self.current_data = extractor.get_unified_standard_data(supplemented_data)
+                self.current_data = extractor.get_unified_standard_data(
+                    supplemented_data
+                )
                 self.info_text.insert(tk.END, "✅ 数据补充完成\n")
             else:
                 # 数据完整，已经通过统一方法处理
@@ -223,7 +233,7 @@ class DataToPDFApp:
             # 更新选择区域显示 - 不再显示总张数（避免重复）
             display_text = (
                 f"✅ 已选择文件: {Path(file_path).name}"
-                f"\n\n点击生成多级标签PDF按钮继续"
+                "\n\n点击生成多级标签PDF按钮继续"
             )
             self.select_label.config(text=display_text, fg="green")
 
@@ -233,10 +243,6 @@ class DataToPDFApp:
             self.status_var.set("❌ 处理失败")
             self.info_text.insert(tk.END, f"\n错误: {error_msg}\n")
 
-
-
-
-
     def _auto_resize_and_center_dialog(self, dialog, content_frame):
         """自动调整对话框大小并居中显示，完全基于内容自适应"""
         try:
@@ -244,45 +250,45 @@ class DataToPDFApp:
             for _ in range(3):
                 dialog.update_idletasks()
                 content_frame.update_idletasks()
-            
+
             # 获取内容的实际所需尺寸
             content_width = content_frame.winfo_reqwidth()
             content_height = content_frame.winfo_reqheight()
-            
+
             # 添加必要的边距：滚动条、对话框边框、标题栏等
-            padding_width = 60   # 减少左右边距
-            padding_height = 80   # 减少上下边距，让对话框更紧凑
-            
+            padding_width = 60  # 减少左右边距
+            padding_height = 80  # 减少上下边距，让对话框更紧凑
+
             # 计算对话框所需的实际尺寸
             required_width = content_width + padding_width
             required_height = content_height + padding_height
-            
+
             # 获取屏幕尺寸，确保不会超出屏幕
             screen_width = dialog.winfo_screenwidth()
             screen_height = dialog.winfo_screenheight()
-            
+
             # 最终尺寸：完全基于内容，但不超过屏幕90%
             final_width = min(required_width, int(screen_width * 0.9))
             final_height = min(required_height, int(screen_height * 0.9))
-            
+
             # 计算居中位置
             x = (screen_width - final_width) // 2
             y = (screen_height - final_height) // 2
-            
+
             # 设置对话框几何形状
             dialog.geometry(f"{final_width}x{final_height}+{x}+{y}")
-            
+
             print(f"✅ 完全自适应调整: {final_width}x{final_height}")
             print(f"   内容尺寸: {content_width}x{content_height}")
             print(f"   边距: {padding_width}x{padding_height}")
-            
+
         except Exception as e:
             print(f"⚠️ 自适应调整失败: {e}")
             # 备用方案：让系统自动计算
             dialog.update_idletasks()
             dialog.geometry("")  # 清空几何设置，让Tkinter自动调整
             dialog.update_idletasks()
-            
+
             # 获取自动调整后的尺寸并居中
             width = dialog.winfo_width()
             height = dialog.winfo_height()
@@ -326,15 +332,15 @@ class DataToPDFApp:
         templates = [
             ("常规", "适用于普通包装标签"),
             ("分盒", "适用于分盒包装标签"),
-            ("套盒", "适用于套盒包装标签")
+            ("套盒", "适用于套盒包装标签"),
         ]
 
         for i, (template_name, description) in enumerate(templates):
             radio = ttk.Radiobutton(
-                template_frame, 
+                template_frame,
                 text=f"{template_name} - {description}",
                 variable=self.template_choice,
-                value=template_name
+                value=template_name,
             )
             radio.pack(anchor=tk.W, pady=5)
 
@@ -353,8 +359,12 @@ class DataToPDFApp:
             dialog.destroy()
 
         # 确认和取消按钮
-        ttk.Button(button_frame, text="确认", command=confirm_template).pack(side=tk.RIGHT, padx=(10, 0))
-        ttk.Button(button_frame, text="取消", command=cancel_template).pack(side=tk.RIGHT)
+        ttk.Button(button_frame, text="确认", command=confirm_template).pack(
+            side=tk.RIGHT, padx=(10, 0)
+        )
+        ttk.Button(button_frame, text="取消", command=cancel_template).pack(
+            side=tk.RIGHT
+        )
 
         # 等待对话框关闭
         dialog.wait_window()
@@ -381,7 +391,7 @@ class DataToPDFApp:
         """根据模板类型显示对应的参数设置对话框"""
         if template_type == "常规":
             get_regular_ui_dialog(self).show_parameters_dialog()
-        elif template_type == "分盒": 
+        elif template_type == "分盒":
             get_split_box_ui_dialog(self).show_parameters_dialog()
         elif template_type == "套盒":
             get_nested_box_ui_dialog(self).show_parameters_dialog()
@@ -393,7 +403,7 @@ class DataToPDFApp:
             return
 
         # 使用已选择的模板
-        template_choice = getattr(self, 'selected_main_template', '常规')
+        template_choice = getattr(self, "selected_main_template", "常规")
 
         try:
             self.status_var.set(f"🔄 正在生成{template_choice}模板PDF...")
@@ -402,25 +412,35 @@ class DataToPDFApp:
 
             # 选择输出目录
             output_dir = filedialog.askdirectory(
-                title="选择输出目录", initialdir=os.path.expanduser("~/Desktop")
+                title="选择输出目录",
+                initialdir=os.path.expanduser("~/Desktop"),
             )
 
             if output_dir:
                 # 创建PDF生成器
                 generator = PDFGenerator()
-                
+
                 # 根据模板选择调用不同的生成方法
                 if template_choice == "常规":
                     generated_files = generator.create_multi_level_pdfs(
-                        self.current_data, self.packaging_params, output_dir, self.current_file
+                        self.current_data,
+                        self.packaging_params,
+                        output_dir,
+                        self.current_file,
                     )
                 elif template_choice == "分盒":
                     generated_files = generator.create_split_box_multi_level_pdfs(
-                        self.current_data, self.packaging_params, output_dir, self.current_file
+                        self.current_data,
+                        self.packaging_params,
+                        output_dir,
+                        self.current_file,
                     )
                 elif template_choice == "套盒":
                     generated_files = generator.create_nested_box_multi_level_pdfs(
-                        self.current_data, self.packaging_params, output_dir, self.current_file
+                        self.current_data,
+                        self.packaging_params,
+                        output_dir,
+                        self.current_file,
                     )
 
                 self.status_var.set(f"✅ {template_choice}模板PDF生成成功!")
@@ -431,7 +451,20 @@ class DataToPDFApp:
                     result_text += f"  - {label_type}: {Path(file_path).name}\n"
 
                 # 使用和模板中完全相同的主题清理逻辑
-                clean_theme = self.current_data['标签名称'].replace('\n', ' ').replace('/', '_').replace('\\', '_').replace(':', '_').replace('?', '_').replace('*', '_').replace('"', '_').replace('<', '_').replace('>', '_').replace('|', '_').replace('!', '_')
+                clean_theme = (
+                    self.current_data["标签名称"]
+                    .replace("\n", " ")
+                    .replace("/", "_")
+                    .replace("\\", "_")
+                    .replace(":", "_")
+                    .replace("?", "_")
+                    .replace("*", "_")
+                    .replace('"', "_")
+                    .replace("<", "_")
+                    .replace(">", "_")
+                    .replace("|", "_")
+                    .replace("!", "_")
+                )
                 folder_name = f"{self.current_data['客户名称编码']}+{clean_theme}+标签"
                 result_text += (
                     f"\n📁 保存目录: {os.path.join(output_dir, folder_name)}\n"
@@ -444,19 +477,27 @@ class DataToPDFApp:
                     "生成成功",
                     f"多级标签PDF已生成!\n\n保存目录: {folder_name}\n\n是否打开文件夹？",
                 ):
-                    import subprocess
                     import platform
+                    import subprocess
 
                     folder_path = os.path.join(output_dir, folder_name)
                     try:
                         if platform.system() == "Darwin":  # macOS
-                            result = subprocess.run(["open", folder_path], capture_output=True, text=True)
+                            result = subprocess.run(
+                                ["open", folder_path],
+                                capture_output=True,
+                                text=True,
+                            )
                             if result.returncode != 0:
-                                messagebox.showerror("错误", f"无法打开文件夹: {result.stderr}")
+                                messagebox.showerror(
+                                    "错误", f"无法打开文件夹: {result.stderr}"
+                                )
                         elif platform.system() == "Windows":  # Windows
                             os.startfile(folder_path)
                         else:
-                            messagebox.showinfo("提示", f"请手动打开文件夹: {folder_path}")
+                            messagebox.showinfo(
+                                "提示", f"请手动打开文件夹: {folder_path}"
+                            )
                     except Exception as e:
                         messagebox.showerror("错误", f"打开文件夹失败: {str(e)}")
 
@@ -472,6 +513,9 @@ class DataToPDFApp:
 
 def main():
     """启动GUI应用"""
+    # 初始化字体管理器
+    initialize_font_manager()
+
     root = tk.Tk()
     app = DataToPDFApp(root)
 

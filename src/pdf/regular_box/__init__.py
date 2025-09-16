@@ -6,4 +6,4 @@ Regular Template Package
 # 使用直接导入，兼容PyInstaller
 from src.pdf.regular_box.template import RegularTemplate
 
-__all__ = ['RegularTemplate']
+__all__ = ["RegularTemplate"]

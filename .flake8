@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 88
+per-file-ignores =
+    # gui_app.py 需要在导入 src 模块前修改 sys.path，这是技术必需的
+    src/gui_app.py: E402
